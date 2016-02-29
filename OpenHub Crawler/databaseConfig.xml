@@ -1,0 +1,5 @@
+<databaseConfig>
+	<databaseUrl>localhost/tad_hub</databaseUrl>
+	<userName>crawler</userName>
+	<password>Pa$$word!2</password>
+</databaseConfig>
