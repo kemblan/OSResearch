@@ -35,6 +35,7 @@ public class OpenHubHTMLConnector {
 
     public BufferedReader getData(String urlQuery) throws IOException {
         URL url = new URL(OPENHUB_URL + urlQuery);
+        System.out.println(url.toString());
         URLConnection connection = url.openConnection();
 
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(

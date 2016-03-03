@@ -146,4 +146,8 @@ public class DatabaseManager {
         return this.preparedStatement;
     }
 
+    public void executeBatch(PreparedStatement preparedStatement) throws SQLException {
+    preparedStatement.executeBatch();
+    }
+
 }

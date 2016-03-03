@@ -73,9 +73,31 @@ public class CommitRepository {
             if (insertKeys.next()) {
                 commit.setId(insertKeys.getInt(1));
                 Iterator<CodeChange> iterator = commit.getCodeChanges().iterator();
+
+                String queryCodeChange = "INSERT INTO code_changes (language, code_added, code_removed, comments_added, comments_removed, blanks_added, blanks_removed, commit_id) "
+                        + "VALUES (?,?,?,?,?,?,?,?)";
                 while (iterator.hasNext()) {
                     CodeChange codeChange = iterator.next();
-
+                    String languageQuery = "SELECT id FROM languages WHERE name=?";
+                    PreparedStatement languagePreparedStatement = databaseManager.getPreparedStatement(languageQuery);
+                    languagePreparedStatement.setString(1, codeChange.getLanguage());
+                    ResultSet langIdSet = databaseManager.executeQuery(languagePreparedStatement);
+                    long langId = 0;
+                    if (langIdSet.next()) {
+                        langId = langIdSet.getLong(1);
+                    }
+                    PreparedStatement codeChangePreparedStatement = databaseManager.getPreparedStatement(queryCodeChange);
+                    codeChangePreparedStatement.setLong(1, langId);
+                    codeChangePreparedStatement.setInt(2, codeChange.getCodeAdded());
+                    codeChangePreparedStatement.setInt(3, codeChange.getCodeRemoved());
+                    codeChangePreparedStatement.setInt(4, codeChange.getCommentsAdded());
+                    codeChangePreparedStatement.setInt(5, codeChange.getCommentsRemoved());
+                    codeChangePreparedStatement.setInt(6, codeChange.getBlanksAdded());
+                    codeChangePreparedStatement.setInt(7, codeChange.getBlanksRemoved());
+                    codeChangePreparedStatement.setLong(8, commit.getId());
+                    Logger.getLogger(OrganizationRepository.class.getName()).log(Level.INFO, "INSERT QUERY for code_cha");
+                    Logger.getLogger(OrganizationRepository.class.getName()).log(Level.INFO, codeChangePreparedStatement.toString());
+                    databaseManager.executeUpdate(codeChangePreparedStatement);
                 }
             }
 

@@ -6,12 +6,9 @@
 package openhub.crawler;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
@@ -150,18 +147,22 @@ public class OpenHubCrawler {
                 List<Organization> organizationList = organizationRepository.getAll();
 
                 Iterator<Organization> iterator = organizationList.iterator();
-                while (iterator.hasNext()) {
+                int count = 0;
+                while (iterator.hasNext() && count < 6) {
                     Organization temp = iterator.next();
-                    if (temp.downloadProjectsInfo()) {
-                        temp.save();
+                    if (count != 0) {
+                        if (temp.downloadProjectsInfo()) {
+                            temp.save();
+                        }
                     }
+                    count++;
                 }
             }
         };
         workerThread.start();
     }
 
-    public void donwloadProjectForOrganization(String urlName) {
+    public void downloadProjectForOrganization(String urlName) {
         Thread workerThread = new Thread() {
             @Override
             public void run() {
@@ -173,11 +174,27 @@ public class OpenHubCrawler {
 
     void downloadCommits() {
         Thread workerThread = new Thread() {
+            volatile boolean isRunning;
+
+            {
+                this.isRunning = true;
+            }
+
             @Override
             public void run() {
                 ProjectRepository projectRepository = new ProjectRepository();
-                Project project = projectRepository.get("mediawiki");
-                project.downloadCommitsInfo();
+//                Project project = projectRepository.get("VisualEditor");
+//                              project.download(isRunning);
+
+                List<Project> projectsList = projectRepository.getAll();
+                Iterator<Project> projectsIterator = projectsList.iterator();
+
+                while (projectsIterator.hasNext()) {
+
+                    Project temp = projectsIterator.next();
+                    temp.download(isRunning);
+                }
+
             }
         };
         workerThread.start();

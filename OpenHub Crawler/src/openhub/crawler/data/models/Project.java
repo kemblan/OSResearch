@@ -5,15 +5,27 @@
  */
 package openhub.crawler.data.models;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import openhub.crawler.OpenHubAPIConnector;
 import openhub.crawler.OpenHubHTMLConnector;
 import openhub.crawler.XMLPrinter;
+import openhub.crawler.data.DatabaseManager;
 import openhub.crawler.data.repositories.ProjectRepository;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jsoup.select.Elements;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -59,6 +71,7 @@ public class Project implements OpenHubData {
         this.averageRating = averageRating;
         this.description = description;
         this.vanityName = vanityName;
+        this.repository = new ProjectRepository();
     }
 
     public boolean downloadInfo() {
@@ -111,7 +124,7 @@ public class Project implements OpenHubData {
 
             }
 
-            System.out.println("wyszstkich stron jest : " + allPages);
+            System.out.println("wszystkich stron jest : " + allPages);
             do {
                 Elements commitLines = document.select("tbody").select("tr");
                 for (org.jsoup.nodes.Element commitLine : commitLines) {
@@ -120,19 +133,20 @@ public class Project implements OpenHubData {
                     System.out.println("commitLink: " + commitLink.tagName());
                     String commitId = commitLink.attr("commit_id");
                     String query2 = "/p/" + vanityName + "/commits/" + commitId;
-//                    String query2 = "/p/firefox/commits/395418251";
                     org.jsoup.nodes.Document commitDocument = OpenHubHTMLConnector.getInstance().getData2(query2);
                     org.jsoup.nodes.Element commitInfo = commitDocument.select(".commit_info").first();
 
                     Elements commitInfos = commitInfo.select("tr");
 
-                    String commitUUID = commitDocument.select(".commit_id").first().text().replace("Commit ID","").replace(" ", "");
+                    String commitUUID = commitDocument.select(".commit_id").first().text().replace("Commit ID", "").replace(" ", "");
                     String contributor = commitInfos.get(0).select("a").get(1).text();
                     String tempId = commitInfos.get(0).select("a").get(1).attr("href");
                     System.out.println(tempId);
                     tempId = tempId.substring(tempId.lastIndexOf("/") + 1);
                     String contributorId = tempId;
-                    String date = commitInfos.get(0).select(".info").get(0).text();
+                    String dateString = commitInfos.get(1).select(".info").get(0).text();
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MMMMM-dd 'at' HH:mm");
+                    Date commitDate = sdf.parse(dateString);
                     String comment = commitInfos.get(3).select(".info").get(0).text();
                     int files = Integer.parseInt(commitInfos.get(0).select(".info").get(1).text());
                     int added = Integer.parseInt(commitInfos.get(1).select(".info").get(1).text());
@@ -150,7 +164,7 @@ public class Project implements OpenHubData {
                         int blanksRemoved = Integer.parseInt(languageInfo.select(".center").get(5).text());
                         CodeChange codeChange = new CodeChange(language, codeAdded, codeRemoved, commentsAdded, commentsRemoved, blanksAdded, blanksRemoved);
                         codeChanges.add(codeChange);
-                        Commit commit = new Commit(this.id, comment, commitId, added, removed, files, contributor,contributorId, codeChanges);
+                        Commit commit = new Commit(this.id, comment, commitId, added, removed, files, contributor, contributorId, codeChanges);
                         commit.save();
                     }
                 }
@@ -160,6 +174,8 @@ public class Project implements OpenHubData {
             } while (page <= allPages);
 
         } catch (IOException ex) {
+            Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParseException ex) {
             Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -191,7 +207,13 @@ public class Project implements OpenHubData {
     @Override
     public int download(boolean isRunning) {
         if (isRunning) {
-            downloadInfo();
+            downloadCommitsHistory();
+        }
+        if (isRunning) {
+            downloadCommitersHistory();
+        }
+        if (isRunning) {
+            downloadCodeHistory();
         }
         return 0;
     }
@@ -240,5 +262,133 @@ public class Project implements OpenHubData {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    private void downloadCodeHistory() {
+
+        BufferedReader htmlReader = null;
+        try {
+            String query = url.replace("https://www.openhub.net", "").replace(".xml", "") + "/analyses/latest/lines_of_code";
+            htmlReader = OpenHubHTMLConnector.getInstance().getData(query);
+            String inputLine;
+            StringBuilder stringBuilder = new StringBuilder();
+            while ((inputLine = htmlReader.readLine()) != null) {
+                stringBuilder.append(inputLine);
+            }
+            htmlReader.close();
+            String jsonString = stringBuilder.toString();
+            JSONObject json = new JSONObject(jsonString);
+            JSONArray dataSeries = json.getJSONArray("series");
+            Map<Long, CodeFact> codeMap = new HashMap<>();
+            boolean insertDone = false;
+            for (int i = 0; i < dataSeries.length(); i++) {
+                JSONObject series = dataSeries.getJSONObject(i);
+                switch (series.getString("name")) {
+                    case "Code":
+                        JSONArray codeLinesArray = series.getJSONArray("data");
+                        for (int j = 0; j < codeLinesArray.length(); j++) {
+                            long timestamp = codeLinesArray.getJSONArray(j).getLong(0);
+                            long codes = codeLinesArray.getJSONArray(j).getLong(1);
+                            if (codeMap.containsKey(timestamp)) {
+                                codeMap.get(timestamp).setCodes(codes);
+                            } else {
+                                CodeFact cf = new CodeFact(timestamp);
+                                cf.setCodes(codes);
+                                codeMap.put(timestamp, cf);
+                            }
+                        }
+                        break;
+                    case "Comments":
+                        JSONArray commentsLinesArray = series.getJSONArray("data");
+                        for (int j = 0; j < commentsLinesArray.length(); j++) {
+                            long timestamp = commentsLinesArray.getJSONArray(j).getLong(0);
+                            long comments = commentsLinesArray.getJSONArray(j).getLong(1);
+                            if (codeMap.containsKey(timestamp)) {
+                                codeMap.get(timestamp).setComments(comments);
+                            } else {
+                                CodeFact cf = new CodeFact(timestamp);
+                                cf.setComments(comments);
+                                codeMap.put(timestamp, cf);
+                            }
+                        }
+                        break;
+                    case "Blanks":
+                        JSONArray blanksLinesArray = series.getJSONArray("data");
+                        for (int j = 0; j < blanksLinesArray.length(); j++) {
+                            long timestamp = blanksLinesArray.getJSONArray(j).getLong(0);
+                            long blanks = blanksLinesArray.getJSONArray(j).getLong(1);
+                            if (codeMap.containsKey(timestamp)) {
+                                codeMap.get(timestamp).setBlanks(blanks);
+                            } else {
+                                CodeFact cf = new CodeFact(timestamp);
+                                cf.setBlanks(blanks);
+                                codeMap.put(timestamp, cf);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            repository.saveCodeHistory(this, codeMap);
+        } catch (IOException | org.json.JSONException ex) {
+            Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    private void downloadCommitersHistory() {
+        BufferedReader htmlReader = null;
+        try {
+            String query = url.replace("https://www.openhub.net", "").replace(".xml", "") + "/analyses/latest/committer_history";
+            htmlReader = OpenHubHTMLConnector.getInstance().getData(query);
+            String inputLine;
+            StringBuilder stringBuilder = new StringBuilder();
+            while ((inputLine = htmlReader.readLine()) != null) {
+                stringBuilder.append(inputLine);
+            }
+            htmlReader.close();
+            String jsonString = stringBuilder.toString();
+            JSONObject json = new JSONObject(jsonString);
+            JSONArray dataSeries = json.getJSONArray("series").getJSONObject(0).getJSONArray("data");
+            Map<Long, CommitersFact> commitersMap = new HashMap<>();
+            for (int i = 0; i < dataSeries.length(); i++) {
+                long timestamp = dataSeries.getJSONArray(i).getLong(0);
+                long commiters = dataSeries.getJSONArray(i).getLong(1);
+                CommitersFact cf = new CommitersFact(timestamp, commiters);
+                commitersMap.put(timestamp, cf);
+            }
+            repository.saveCommitersHistory(this, commitersMap);
+        } catch (IOException ex) {
+            Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    private void downloadCommitsHistory() {
+        BufferedReader htmlReader = null;
+        try {
+            String query = url.replace("https://www.openhub.net", "").replace(".xml", "") + "/analyses/latest/commits_history";
+            htmlReader = OpenHubHTMLConnector.getInstance().getData(query);
+            String inputLine;
+            StringBuilder stringBuilder = new StringBuilder();
+            while ((inputLine = htmlReader.readLine()) != null) {
+                stringBuilder.append(inputLine);
+            }
+            htmlReader.close();
+            String jsonString = stringBuilder.toString();
+            JSONObject json = new JSONObject(jsonString);
+            JSONArray dataSeries = json.getJSONArray("series").getJSONObject(0).getJSONArray("data");
+            Map<Long, CommitsFact> commitsMap = new HashMap<>();
+            for (int i = 0; i < dataSeries.length(); i++) {
+                long timestamp = dataSeries.getJSONArray(i).getLong(0);
+                long commits = dataSeries.getJSONArray(i).getLong(1);
+                CommitsFact cf = new CommitsFact(timestamp, commits);
+                commitsMap.put(timestamp, cf);
+            }
+            repository.saveCommitsHistory(this, commitsMap);
+        } catch (IOException ex) {
+            Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }
