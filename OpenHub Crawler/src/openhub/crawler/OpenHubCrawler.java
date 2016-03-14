@@ -199,5 +199,57 @@ public class OpenHubCrawler {
         };
         workerThread.start();
     }
+     void downloadCommits(int min, int max) {
+        Thread workerThread = new Thread() {
+            volatile boolean isRunning;
+
+            {
+                this.isRunning = true;
+            }
+
+            @Override
+            public void run() {
+                ProjectRepository projectRepository = new ProjectRepository();
+//                Project project = projectRepository.get("VisualEditor");
+//                              project.download(isRunning);
+
+                List<Project> projectsList = projectRepository.getAll();
+                Iterator<Project> projectsIterator = projectsList.iterator();
+
+                while (projectsIterator.hasNext()) {
+
+                    Project temp = projectsIterator.next();
+                    if(temp.getOrgId()>=min&&temp.getOrgId()<=max)
+                    temp.download(isRunning);
+                }
+
+            }
+        };
+        workerThread.start();
+    }
+
+    void downloadProjectsForOrganizations(int min, int max) {
+        Thread workerThread = new Thread() {
+            @Override
+            public void run() {
+
+                OrganizationRepository organizationRepository = new OrganizationRepository();
+                List<Organization> organizationList = organizationRepository.getAll();
+
+                Iterator<Organization> iterator = organizationList.iterator();
+                int count = 1;
+                while (iterator.hasNext() && count <= max) {
+                    Organization temp = iterator.next();
+                    if (count >= min) {
+                        if (temp.downloadProjectsInfo()) {
+                            temp.save();
+                        }
+                    }
+                    count++;
+                }
+            }
+        };
+        workerThread.start();
+    }
 
 }

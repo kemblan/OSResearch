@@ -92,8 +92,17 @@ public class Project implements OpenHubData {
                 this.description = "";
             }
             this.vanityName = root.getElementsByTagName("vanity_url").item(0).getTextContent();
-            this.ratingCount = Integer.parseInt(root.getElementsByTagName("rating_count").item(0).getTextContent());
-            this.averageRating = Double.parseDouble(root.getElementsByTagName("average_rating").item(0).getTextContent());
+            if (root.getElementsByTagName("rating_count").getLength() > 0 && !root.getElementsByTagName("rating_count").item(0).getTextContent().isEmpty()) {
+                this.ratingCount = Integer.parseInt(root.getElementsByTagName("rating_count").item(0).getTextContent());
+            } else {
+                this.ratingCount = 0;
+            }
+
+            if (root.getElementsByTagName("average_rating").getLength() > 0 && !root.getElementsByTagName("average_rating").item(0).getTextContent().isEmpty()) {
+                this.averageRating = Double.parseDouble(root.getElementsByTagName("average_rating").item(0).getTextContent());
+            } else {
+                this.averageRating = 0;
+            }
             if (root.getElementsByTagName("review_count").getLength() > 0) {
                 this.reviewCount = Integer.parseInt(root.getElementsByTagName("review_count").item(0).getTextContent());
             } else {

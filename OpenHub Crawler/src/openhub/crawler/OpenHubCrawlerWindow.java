@@ -12,6 +12,8 @@ package openhub.crawler;
 public class OpenHubCrawlerWindow extends javax.swing.JFrame {
 
     private OpenHubCrawler crawler;
+    private Integer orgMinID;
+    private Integer orgMaxID;
 
     /**
      * Creates new form OpenHubCrawlerWindow
@@ -43,6 +45,8 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         removeJobButton = new javax.swing.JButton();
         clearAllJobsButton = new javax.swing.JButton();
+        minIDSpinner = new javax.swing.JSpinner();
+        maxIDSpinner = new javax.swing.JSpinner();
         jScrollPane1 = new javax.swing.JScrollPane();
         logTextArea = new javax.swing.JTextArea();
         jLabel1 = new javax.swing.JLabel();
@@ -117,12 +121,16 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
                         .addComponent(addJobButton))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(removeJobButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(clearAllJobsButton))
                             .addComponent(jLabel2)
-                            .addComponent(jobTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 221, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jobTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 221, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(minIDSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(removeJobButton))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(clearAllJobsButton)
+                                    .addComponent(maxIDSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE))
                 .addContainerGap())
@@ -139,12 +147,16 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(removeJobButton)
-                    .addComponent(clearAllJobsButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
+                    .addComponent(clearAllJobsButton)
+                    .addComponent(removeJobButton))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(maxIDSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(minIDSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(startButton)
                     .addComponent(stopButton))
@@ -277,11 +289,13 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_addApiKeyActionPerformed
 
     private void downloadAllProjectsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadAllProjectsActionPerformed
-        crawler.downloadProjectsForAllOrganizations();
+//        crawler.downloadProjectsForAllOrganizations();
+        crawler.downloadProjectsForOrganizations((int) minIDSpinner.getValue(), (int) maxIDSpinner.getValue());
     }//GEN-LAST:event_downloadAllProjectsActionPerformed
 
     private void downloadCommitsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadCommitsActionPerformed
-         crawler.downloadCommits();
+//         crawler.downloadCommits();
+        crawler.downloadCommits((int) minIDSpinner.getValue(), (int) maxIDSpinner.getValue());
     }//GEN-LAST:event_downloadCommitsActionPerformed
 
     /**
@@ -338,6 +352,8 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
     private javax.swing.JTextField jobName;
     private javax.swing.JComboBox<String> jobTypeComboBox;
     private javax.swing.JTextArea logTextArea;
+    private javax.swing.JSpinner maxIDSpinner;
+    private javax.swing.JSpinner minIDSpinner;
     private javax.swing.JButton removeJobButton;
     private javax.swing.JList<String> scheduledJobsList;
     private javax.swing.JButton startButton;

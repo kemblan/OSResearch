@@ -129,13 +129,19 @@
                       </Group>
                       <Group type="102" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" attributes="0">
-                                  <Component id="removeJobButton" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Component id="clearAllJobsButton" min="-2" max="-2" attributes="0"/>
-                              </Group>
                               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                               <Component id="jobTypeComboBox" alignment="0" min="-2" pref="221" max="-2" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Component id="minIDSpinner" min="-2" max="-2" attributes="0"/>
+                                      <Component id="removeJobButton" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Component id="clearAllJobsButton" min="-2" max="-2" attributes="0"/>
+                                      <Component id="maxIDSpinner" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
                           </Group>
                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       </Group>
@@ -158,13 +164,18 @@
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="jScrollPane2" min="-2" pref="163" max="-2" attributes="0"/>
+                  <Component id="jScrollPane2" min="-2" pref="104" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="removeJobButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="clearAllJobsButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="removeJobButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="46" max="32767" attributes="0"/>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="maxIDSpinner" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="minIDSpinner" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace pref="61" max="32767" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="startButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="stopButton" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -256,6 +267,10 @@
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clearAllJobsButtonActionPerformed"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JSpinner" name="minIDSpinner">
+        </Component>
+        <Component class="javax.swing.JSpinner" name="maxIDSpinner">
         </Component>
       </SubComponents>
     </Container>
