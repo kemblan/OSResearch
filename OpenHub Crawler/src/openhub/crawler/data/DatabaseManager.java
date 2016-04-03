@@ -25,7 +25,7 @@ import org.xml.sax.SAXException;
 /**
  *
  * This is single thread version!
- * 
+ *
  * @author mateusz
  */
 public class DatabaseManager {
@@ -146,8 +146,17 @@ public class DatabaseManager {
         return this.preparedStatement;
     }
 
-    public void executeBatch(PreparedStatement preparedStatement) throws SQLException {
-    preparedStatement.executeBatch();
+    public synchronized void executeBatch(PreparedStatement preparedStatement) throws SQLException {
+        preparedStatement.executeBatch();
+    }
+
+    public synchronized Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(databaseUrl, userName, password);
+
+    }
+
+    public synchronized PreparedStatement getPreparedStatement(Connection conn, String query) throws SQLException {
+        return conn.prepareStatement(query);
     }
 
 }

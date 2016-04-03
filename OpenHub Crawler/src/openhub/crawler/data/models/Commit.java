@@ -5,6 +5,7 @@
  */
 package openhub.crawler.data.models;
 
+import java.util.Date;
 import java.util.List;
 import openhub.crawler.data.repositories.CommitRepository;
 
@@ -23,12 +24,13 @@ public class Commit {
     private int linesAdded;
     private int linesDeleted;
     private int filesModified;
+    private Date date;
 
     private String contributorName;
     private String contributorId;
     private List<CodeChange> codeChanges;
 
-    public Commit(int project, String comment, String commitID, int linesAdded, int linesDeleted, int filesModified, String contributorName, List<CodeChange> codeChanges) {
+    public Commit(int project, String comment, String commitID, int linesAdded, int linesDeleted, int filesModified, String contributorName, List<CodeChange> codeChanges, Date date) {
         this.project = project;
         this.comment = comment;
         this.commitID = commitID;
@@ -37,10 +39,11 @@ public class Commit {
         this.filesModified = filesModified;
         this.contributorName = contributorName;
         this.codeChanges = codeChanges;
+        this.date = date;
         this.repository = new CommitRepository();
     }
 
-    public Commit(long project, String comment, String commitID, int linesAdded, int linesDeleted, int filesModified, String contributorName, String contributorId, List<CodeChange> codeChanges) {
+    public Commit(long project, String comment, String commitID, int linesAdded, int linesDeleted, int filesModified, String contributorName, String contributorId, List<CodeChange> codeChanges, Date date) {
         this.project = project;
         this.comment = comment;
         this.commitID = commitID;
@@ -50,6 +53,7 @@ public class Commit {
         this.contributorName = contributorName;
         this.contributorId = contributorId;
         this.codeChanges = codeChanges;
+        this.date = date;
         this.repository = new CommitRepository();
     }
 
@@ -99,6 +103,14 @@ public class Commit {
 
     public String getContributorId() {
         return contributorId;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
     }
 
     void save() {

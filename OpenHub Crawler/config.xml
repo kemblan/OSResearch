@@ -1,0 +1,16 @@
+<config>
+	<thread-count>7</thread-count>
+	<job>
+		<type>pull-commits-detailed</type>
+		<start>944</start>
+		<end>945</end>
+	</job>
+</config>
+
+
+<!--
+possible job types:
+* pull-commits-detailed		(start & end are project id)
+* pull-projects-for-orgs	(start & end are orgs id)
+* pull-projects-info		(start & end are project id)
+-->

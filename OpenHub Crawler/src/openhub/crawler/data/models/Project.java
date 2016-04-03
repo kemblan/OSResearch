@@ -17,10 +17,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import openhub.crawler.OpenHubAPIConnector;
 import openhub.crawler.OpenHubHTMLConnector;
+import openhub.crawler.UILogger;
 import openhub.crawler.XMLPrinter;
 import openhub.crawler.data.DatabaseManager;
 import openhub.crawler.data.repositories.ProjectRepository;
@@ -173,9 +176,9 @@ public class Project implements OpenHubData {
                         int blanksRemoved = Integer.parseInt(languageInfo.select(".center").get(5).text());
                         CodeChange codeChange = new CodeChange(language, codeAdded, codeRemoved, commentsAdded, commentsRemoved, blanksAdded, blanksRemoved);
                         codeChanges.add(codeChange);
-                        Commit commit = new Commit(this.id, comment, commitId, added, removed, files, contributor, contributorId, codeChanges);
-                        commit.save();
                     }
+                    Commit commit = new Commit(this.id, comment, commitId, added, removed, files, contributor, contributorId, codeChanges,commitDate);
+                    commit.save();
                 }
                 page++;
                 query = "/p/" + vanityName + "/commits?page=" + page;
@@ -190,6 +193,89 @@ public class Project implements OpenHubData {
 
         return false;
 
+    }
+
+    public boolean donwloadCommitsMultithread(int threadCount) {
+        int page = 1;
+        int allPages = 0;
+        try {
+            String query = "/p/" + vanityName + "/commits?page=" + page;
+            org.jsoup.nodes.Document document = OpenHubHTMLConnector.getInstance().getData2(query);
+            Elements commitPages = document.select(".pagination").select("a").select(":not(.next)").select(":not(.prev)");
+//            System.out.println(commitPages.toString());
+            for (org.jsoup.nodes.Element commitPage : commitPages) {
+                if (!commitPage.hasAttr("rel")) {
+                    int tempPage = Integer.parseInt(commitPage.text());
+                    if (tempPage > allPages) {
+                        allPages = tempPage;
+                    }
+                }
+
+            }
+            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+            System.out.println("wszystkich stron jest : " + allPages);
+//            UILogger.getInstance().log("wszystkich stron projektu "+this.vanityName+ " jest : " + allPages);
+
+            for (page = 1; page <= allPages; page++) {
+                query = "/p/" + vanityName + "/commits?page=" + page;
+//                UILogger.getInstance().log("projekt: "+this.vanityName+" strona: "+page +"/n");
+                final org.jsoup.nodes.Document pageDoc = OpenHubHTMLConnector.getInstance().getData2(query);
+                executor.submit(() -> {
+                    Elements commitLines = pageDoc.select("tbody").select("tr");
+                    for (org.jsoup.nodes.Element commitLine : commitLines) {
+                        try {
+//                            System.out.println("commitLine: " + commitLine.toString());
+                            org.jsoup.nodes.Element commitLink = commitLine.select(".commit-details").first();
+//                            System.out.println("commitLink: " + commitLink.tagName());
+                            String commitId = commitLink.attr("commit_id");
+                            String query2 = "/p/" + vanityName + "/commits/" + commitId;
+                            org.jsoup.nodes.Document commitDocument = OpenHubHTMLConnector.getInstance().getData2(query2);
+                            org.jsoup.nodes.Element commitInfo = commitDocument.select(".commit_info").first();
+
+                            Elements commitInfos = commitInfo.select("tr");
+
+                            String commitUUID = commitDocument.select(".commit_id").first().text().replace("Commit ID", "").replace(" ", "");
+                            String contributor = commitInfos.get(0).select("a").get(1).text();
+                            String tempId = commitInfos.get(0).select("a").get(1).attr("href");
+//                            System.out.printl n(tempId);
+                            tempId = tempId.substring(tempId.lastIndexOf("/") + 1);
+                            String contributorId = tempId;
+                            String dateString = commitInfos.get(1).select(".info").get(0).text();
+                            SimpleDateFormat sdf = new SimpleDateFormat("dd-MMMMM-yyyy 'at' HH:mm");
+                            Date commitDate = sdf.parse(dateString);
+//                            System.out.println(commitDate.toString());
+                            String comment = commitInfos.get(3).select(".info").get(0).text();
+                            int files = Integer.parseInt(commitInfos.get(0).select(".info").get(1).text());
+                            int added = Integer.parseInt(commitInfos.get(1).select(".info").get(1).text());
+                            int removed = Integer.parseInt(commitInfos.get(2).select(".info").get(1).text());
+
+                            Elements languagesInfo = commitDocument.select(".language_total.center").select("tbody").select("tr");//.select(":not(.nohover)");
+                            List<CodeChange> codeChanges = new ArrayList<>();
+                            for (org.jsoup.nodes.Element languageInfo : languagesInfo) {
+                                String language = languageInfo.select("a").first().text();
+                                int codeAdded = Integer.parseInt(languageInfo.select(".center").get(0).text());
+                                int codeRemoved = Integer.parseInt(languageInfo.select(".center").get(1).text());
+                                int commentsAdded = Integer.parseInt(languageInfo.select(".center").get(2).text());
+                                int commentsRemoved = Integer.parseInt(languageInfo.select(".center").get(3).text());
+                                int blanksAdded = Integer.parseInt(languageInfo.select(".center").get(4).text());
+                                int blanksRemoved = Integer.parseInt(languageInfo.select(".center").get(5).text());
+                                CodeChange codeChange = new CodeChange(language, codeAdded, codeRemoved, commentsAdded, commentsRemoved, blanksAdded, blanksRemoved);
+                                codeChanges.add(codeChange);
+                            }
+                            Commit commit = new Commit(this.id, comment, commitId, added, removed, files, contributor, contributorId, codeChanges, commitDate);
+                            commit.save();
+                        } catch (IOException | ParseException ex) {
+                            Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                });
+            }
+            return true;
+        } catch (IOException ex) {
+            Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
     }
 
     public boolean downloadCommitersInfo() {
@@ -368,7 +454,7 @@ public class Project implements OpenHubData {
                 commitersMap.put(timestamp, cf);
             }
             repository.saveCommitersHistory(this, commitersMap);
-        } catch (IOException ex) {
+        } catch (IOException | org.json.JSONException ex) {
             Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -396,7 +482,7 @@ public class Project implements OpenHubData {
                 commitsMap.put(timestamp, cf);
             }
             repository.saveCommitsHistory(this, commitsMap);
-        } catch (IOException ex) {
+        } catch (IOException | org.json.JSONException ex) {
             Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

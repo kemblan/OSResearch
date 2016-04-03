@@ -33,6 +33,14 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="downloadCommitsActionPerformed"/>
               </Events>
             </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="downloadProjectInfo">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Download project info"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="downloadProjectInfoActionPerformed"/>
+              </Events>
+            </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="addApiKey">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Add API key"/>
@@ -132,14 +140,14 @@
                               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                               <Component id="jobTypeComboBox" alignment="0" min="-2" pref="221" max="-2" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
-                                  <Group type="103" groupAlignment="1" attributes="0">
-                                      <Component id="minIDSpinner" min="-2" max="-2" attributes="0"/>
-                                      <Component id="removeJobButton" min="-2" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                      <Component id="removeJobButton" max="32767" attributes="0"/>
+                                      <Component id="minIDSpinner" max="32767" attributes="0"/>
                                   </Group>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="1" attributes="0">
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                       <Component id="clearAllJobsButton" min="-2" max="-2" attributes="0"/>
-                                      <Component id="maxIDSpinner" min="-2" max="-2" attributes="0"/>
+                                      <Component id="maxIDSpinner" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>

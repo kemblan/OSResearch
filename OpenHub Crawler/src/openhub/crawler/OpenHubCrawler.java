@@ -5,14 +5,19 @@
  */
 package openhub.crawler;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import openhub.crawler.data.DatabaseManager;
 import openhub.crawler.data.models.OpenHubData;
@@ -199,7 +204,8 @@ public class OpenHubCrawler {
         };
         workerThread.start();
     }
-     void downloadCommits(int min, int max) {
+
+    void downloadCommits(int min, int max) {
         Thread workerThread = new Thread() {
             volatile boolean isRunning;
 
@@ -219,7 +225,65 @@ public class OpenHubCrawler {
                 while (projectsIterator.hasNext()) {
 
                     Project temp = projectsIterator.next();
-                    if(temp.getOrgId()>=min&&temp.getOrgId()<=max)
+                    if (temp.getOrgId() >= min && temp.getOrgId() <= max) {
+                        temp.download(isRunning);
+                    }
+                }
+
+            }
+        };
+        workerThread.start();
+    }
+
+    void downloadCommitsMultithread(int min, int max, int threadCount) {
+        Thread workerThread = new Thread() {
+            volatile boolean isRunning;
+
+            {
+                this.isRunning = true;
+            }
+
+            @Override
+            public void run() {
+                ProjectRepository projectRepository = new ProjectRepository();
+//                Project project = projectRepository.get("VisualEditor");
+//                              project.download(isRunning);
+
+                List<Project> projectsList = projectRepository.getAll();
+                Iterator<Project> projectsIterator = projectsList.iterator();
+
+                while (projectsIterator.hasNext()) {
+
+                    Project temp = projectsIterator.next();
+
+                    if (temp.getId() >= min && temp.getId() <= max) {
+                        System.out.println("zaczynamy");
+                        temp.donwloadCommitsMultithread(threadCount);
+                    }
+                }
+
+            }
+        };
+        workerThread.start();
+    }
+
+    void downloadProjectInfo() {
+        Thread workerThread = new Thread() {
+            volatile boolean isRunning;
+
+            {
+                this.isRunning = true;
+            }
+
+            @Override
+            public void run() {
+                ProjectRepository projectRepository = new ProjectRepository();
+
+                List<Project> projectsList = projectRepository.getAll();
+                Iterator<Project> projectsIterator = projectsList.iterator();
+
+                while (projectsIterator.hasNext()) {
+                    Project temp = projectsIterator.next();
                     temp.download(isRunning);
                 }
 
@@ -252,4 +316,46 @@ public class OpenHubCrawler {
         workerThread.start();
     }
 
+    void initialize() {
+        DatabaseManager databaseManager = DatabaseManager.getInstance();
+        try {
+            databaseManager.loadConfiguration();
+            loadConfiguration();
+        } catch (SAXException | IOException | ParserConfigurationException ex) {
+            Logger.getLogger(OpenHubCrawler.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            Logger.getLogger(OpenHubCrawler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        System.out.println("Initialization done.");
+
+    }
+
+    private void loadConfiguration() throws SAXException, IOException, ParserConfigurationException {
+        File xmlFile = new File("config.xml");
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        Document doc = dBuilder.parse(xmlFile);
+        doc.getDocumentElement().normalize();
+
+        NodeList nodeList = doc.getDocumentElement().getChildNodes();
+        final int threadCount = Integer.parseInt(doc.getDocumentElement().getElementsByTagName("thread-count").item(0).getTextContent());
+//        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            if (nodeList.item(i).getNodeName().equals("job")) {
+                final String type = ((Element) nodeList.item(i)).getElementsByTagName("type").item(0).getTextContent();
+                final long start = Long.parseLong(((Element) nodeList.item(i)).getElementsByTagName("start").item(0).getTextContent());
+                final long end = Long.parseLong(((Element) nodeList.item(i)).getElementsByTagName("end").item(0).getTextContent());
+//                executor.submit(() -> {
+//                    ProjectRepository projectRepository = new ProjectRepository();
+//                    for (long t = start; t <= end; t++) {
+//                        Project project = projectRepository.get(t);
+//                        project.downloadCommitsInfo();
+//                    }
+//                });
+                downloadCommitsMultithread((int) start, (int) end, threadCount);
+            }
+        }
+    }
 }

@@ -56,6 +56,7 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
         downloadOrgsList = new javax.swing.JMenuItem();
         downloadAllProjects = new javax.swing.JMenuItem();
         downloadCommits = new javax.swing.JMenuItem();
+        downloadProjectInfo = new javax.swing.JMenuItem();
         addApiKey = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
 
@@ -124,13 +125,13 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
                             .addComponent(jLabel2)
                             .addComponent(jobTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 221, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(minIDSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(removeJobButton))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(removeJobButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(minIDSpinner))
+                                .addGap(18, 18, 18)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(clearAllJobsButton)
-                                    .addComponent(maxIDSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                    .addComponent(maxIDSpinner))))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE))
                 .addContainerGap())
@@ -202,6 +203,14 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
             }
         });
         jMenu1.add(downloadCommits);
+
+        downloadProjectInfo.setText("Download project info");
+        downloadProjectInfo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                downloadProjectInfoActionPerformed(evt);
+            }
+        });
+        jMenu1.add(downloadProjectInfo);
 
         addApiKey.setText("Add API key");
         addApiKey.addActionListener(new java.awt.event.ActionListener() {
@@ -295,8 +304,14 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
 
     private void downloadCommitsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadCommitsActionPerformed
 //         crawler.downloadCommits();
-        crawler.downloadCommits((int) minIDSpinner.getValue(), (int) maxIDSpinner.getValue());
+int val = (int)maxIDSpinner.getValue();
+System.out.println(val);
+        crawler.downloadCommitsMultithread((int) minIDSpinner.getValue(), (int) maxIDSpinner.getValue(), 50);
     }//GEN-LAST:event_downloadCommitsActionPerformed
+
+    private void downloadProjectInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadProjectInfoActionPerformed
+        crawler.downloadProjectInfo();
+    }//GEN-LAST:event_downloadProjectInfoActionPerformed
 
     /**
      * @param args the command line arguments
@@ -325,12 +340,18 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
         }
         //</editor-fold>
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new OpenHubCrawlerWindow().setVisible(true);
-            }
-        });
+        System.out.println(args[0]);
+        if (args.length >= 1 && args[0].equals("fileConfig")) {
+            OpenHubCrawler crawler = new OpenHubCrawler();
+            crawler.initialize();
+        } else {
+            /* Create and display the form */
+            java.awt.EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    new OpenHubCrawlerWindow().setVisible(true);
+                }
+            });
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -341,6 +362,7 @@ public class OpenHubCrawlerWindow extends javax.swing.JFrame {
     private javax.swing.JMenuItem downloadAllProjects;
     private javax.swing.JMenuItem downloadCommits;
     private javax.swing.JMenuItem downloadOrgsList;
+    private javax.swing.JMenuItem downloadProjectInfo;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JMenu jMenu1;

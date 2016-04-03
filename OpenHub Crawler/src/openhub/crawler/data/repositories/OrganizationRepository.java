@@ -5,6 +5,7 @@
  */
 package openhub.crawler.data.repositories;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,12 +35,14 @@ public class OrganizationRepository {
     public Organization get(String name) {
         try {
             String query = "";
-            PreparedStatement preparedStatement = databaseManager.getPreparedStatement(query);
+            Connection connection = databaseManager.getConnection();
+            PreparedStatement preparedStatement = databaseManager.getPreparedStatement(connection, query);
 
             //prepare
             ResultSet resultSet = databaseManager.executeQuery(preparedStatement);
 
             Organization organization = new Organization(name);
+            connection.close();
             return organization;
         } catch (SQLException ex) {
             Logger.getLogger(OrganizationRepository.class.getName()).log(Level.SEVERE, null, ex);
@@ -50,7 +53,8 @@ public class OrganizationRepository {
     public List<Organization> getAll() {
         try {
             String query = "SELECT * FROM orgs order by id";
-            PreparedStatement preparedStatement = databaseManager.getPreparedStatement(query);
+            Connection connection = databaseManager.getConnection();
+            PreparedStatement preparedStatement = databaseManager.getPreparedStatement(connection, query);
 
             //prepare
             ResultSet resultSet = databaseManager.executeQuery(preparedStatement);
@@ -69,12 +73,13 @@ public class OrganizationRepository {
                 int affiliatedCommits = resultSet.getInt("affiliatedCommits");
                 int outsideProjects = resultSet.getInt("outsideProjects");
                 int affiliatedProjects = resultSet.getInt("affiliatedProjects");
-                int id =resultSet.getInt("id");
+                int id = resultSet.getInt("id");
 
                 Organization organization = new Organization(name, urlName, url, description, homepage, type, outsideCommiters, outsideCommits, affiliatedCommiters, affiliatedCommits, outsideProjects, affiliatedProjects);
                 organization.setId(id);
                 organizationList.add(organization);
             }
+            connection.close();
             return organizationList;
         } catch (SQLException ex) {
             Logger.getLogger(OrganizationRepository.class.getName()).log(Level.SEVERE, null, ex);
@@ -100,7 +105,8 @@ public class OrganizationRepository {
             String query = "INSERT INTO orgs (name, urlName, description, homepage, "
                     + "type, outsideCommiters, outsideCommits, affiliatedCommiters,"
                     + "affiliatedCommits, outsideProjects, affiliatedProjects, url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-            PreparedStatement preparedStatement = databaseManager.getPreparedStatement(query);
+            Connection connection = databaseManager.getConnection();
+            PreparedStatement preparedStatement = databaseManager.getPreparedStatement(connection, query);
             preparedStatement.setString(1, organization.getName());
             preparedStatement.setString(2, organization.getUrlName());
             preparedStatement.setString(3, organization.getDescription());
@@ -116,6 +122,7 @@ public class OrganizationRepository {
             Logger.getLogger(OrganizationRepository.class.getName()).log(Level.INFO, "INSERT QUERY for :{0}", organization.getName());
             Logger.getLogger(OrganizationRepository.class.getName()).log(Level.INFO, preparedStatement.toString());
             databaseManager.executeUpdate(preparedStatement);
+            connection.close();
             return true;
         } catch (SQLException ex) {
             Logger.getLogger(OrganizationRepository.class.getName()).log(Level.WARNING, "SQL INSERT ERROR");
@@ -128,7 +135,8 @@ public class OrganizationRepository {
             String query = "UPDATE orgs SET urlName=?, description=?, homepage=?, type=?, "
                     + "outsideCommiters=?, outsideCommits=?, affiliatedCommiters=?, "
                     + "affiliatedCommits=?, outsideProjects=?, affiliatedProjects=?, url=?  WHERE name=?";
-            PreparedStatement preparedStatement = databaseManager.getPreparedStatement(query);
+            Connection connection = databaseManager.getConnection();
+            PreparedStatement preparedStatement = databaseManager.getPreparedStatement(connection, query);
             preparedStatement.setString(1, organization.getUrlName());
             preparedStatement.setString(2, organization.getDescription());
             preparedStatement.setString(3, organization.getHomepage());
@@ -143,6 +151,7 @@ public class OrganizationRepository {
             preparedStatement.setString(12, organization.getName());
             Logger.getLogger(OrganizationRepository.class.getName()).log(Level.INFO, "UPDATE QUERY :{0}", organization.getName());
             Logger.getLogger(OrganizationRepository.class.getName()).log(Level.INFO, preparedStatement.toString());
+            connection.close();
             databaseManager.executeUpdate(preparedStatement);
             return true;
         } catch (SQLException ex) {
