@@ -1,9 +1,9 @@
 <config>
-	<thread-count>7</thread-count>
+	<thread-count>100</thread-count>
 	<job>
 		<type>pull-commits-detailed</type>
-		<start>944</start>
-		<end>945</end>
+		<start>386</start>
+		<end>386</end>
 	</job>
 </config>
 

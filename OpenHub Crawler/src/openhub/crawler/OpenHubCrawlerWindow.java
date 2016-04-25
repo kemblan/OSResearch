@@ -340,7 +340,7 @@ System.out.println(val);
         }
         //</editor-fold>
 
-        System.out.println(args[0]);
+//        System.out.println(args[0]);
         if (args.length >= 1 && args[0].equals("fileConfig")) {
             OpenHubCrawler crawler = new OpenHubCrawler();
             crawler.initialize();
